@@ -426,10 +426,8 @@ class DeploymentUpdateManager(object):
                                 changes=node)
 
         for deleted_node_instance in deleted_node_instances:
-            sm_node_id = \
-                self.sm._storage_node_id(dep_update.deployment_id,
-                                         deleted_node_instance['node_id'])
-            self.sm.delete_node(sm_node_id)
+            self.sm.delete_node(dep_update.deployment_id,
+                                deleted_node_instance['node_id'])
 
     def _finalize_node_instances(self,
                                  modified_node_instances):
