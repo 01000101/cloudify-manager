@@ -7,13 +7,11 @@ description: >
   Micro web sites hosting.
 
 relationships:
-  added_relationships:
+  relationship_to_remove:                            # relationship to remove
     derived_from: cloudify.relationships.connected_to
-    source_interfaces:
+    target_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        preconfigure: scripts/increment.sh
-        postconfigure: scripts/increment.sh
-        establish: scripts/increment.sh
+        unlink: scripts/touch.sh
 
 node_templates:
   site0:
@@ -27,5 +25,6 @@ node_templates:
     relationships:
       - type: cloudify.relationships.connected_to
         target: site0
-      - type: added_relationships       # New relationship instance
+      - type: relationship_to_remove
         target: site1
+

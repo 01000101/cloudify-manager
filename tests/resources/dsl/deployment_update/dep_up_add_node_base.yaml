@@ -6,10 +6,6 @@ imports:
 description: >
   Micro web sites hosting.
 
-
 node_templates:
   site1:
-    type: cloudify.nodes.Compute
-
-  site2:
     type: cloudify.nodes.Compute

@@ -51,14 +51,17 @@ class TestDeploymentUpdate(TestCase):
         """
         predicted_relationship_type = 'cloudify.relationships.contained_in'
         predicted_node_type = 'new_node_type'
+        test_name = 'dep_up_add_node'
+        base_bp = '{0}_base.yaml'.format(test_name)
+        modified_bp = '{0}.yaml'.format(test_name)
 
-        initial_blueprint_path = \
-            resource(os.path.join(blueprints_base_path, 'dep_up_initial.yaml'))
+        initial_blueprint_path = resource(os.path.join(blueprints_base_path,
+                                                       base_bp))
         deployment, _ = deploy(initial_blueprint_path)
 
         new_blueprint_path = \
             resource(os.path.join(blueprints_base_path,
-                                  'dep_up_add_node.yaml'))
+                                  modified_bp))
 
         tempdir = tempfile.mkdtemp()
         try:
@@ -125,60 +128,119 @@ class TestDeploymentUpdate(TestCase):
                 raise Exception('The nodes differed on {0}. {1}!={2}'
                                 .format(k, d1[k], d2[k]))
 
-    def _test_add_relationship(self, archive_mode=False):
-        predicted_relationship_type = 'new_relationship_type'
-        _1_rel = 'dep_up_initial.yaml'
-        _2_rel = 'dep_up_add_relationship.yaml'
+    def _deploy_and_get_modified_bp_path(self, base_bp, modified_bp):
+        base_bp_path = \
+            resource(os.path.join(blueprints_base_path, base_bp))
+        deployment, _ = deploy(base_bp_path)
+        modified_bp_path = \
+            resource(os.path.join(blueprints_base_path, modified_bp))
 
-        initial_blueprint_path = \
-            resource(os.path.join(blueprints_base_path, _2_rel))
-        deployment, _ = deploy(initial_blueprint_path)
-        new_blueprint_path = \
-            resource(os.path.join(blueprints_base_path, _1_rel))
+        return deployment, modified_bp_path
 
-        # old_server2 = self.client.nodes.get(deployment_id=deployment.id,
-        #                                     node_id='server2')
-        # old_server2_instances = \
-        #     self.client.node_instances.list(deployment_id=deployment.id,
-        #                                     node_id='server2')
-        # self.assertEqual(len(old_server2_instances), 1)
-        # old_server2_instance = old_server2_instances[0]
-        #
-        # old_site = self.client.nodes.get(deployment_id=deployment.id,
-        #                                  node_id='old_site')
-        # old_site_instances = \
-        #     self.client.node_instances.list(deployment_id=deployment.id,
-        #                                     node_id='old_site')
-        # self.assertEqual(len(old_site_instances), 1)
-        # old_site_instance = old_site_instances[0]
+    def test_add_relationship(self):
+        bp_name = 'dep_up_add_relationship'
+        base_bp = '{0}_base.yaml'.format(bp_name)
+        modified_bp = '{0}.yaml'.format(bp_name)
 
-        # # Assert the site already holds one relationship
-        # self.assertEquals(1, len(old_site_instance.relationships))
-        #
-        # # Assert the site has source_ops before the commit
-        # self.assertDictContainsSubset(
-        #         {'source_ops_counter': '3'},
-        #         old_site_instance['runtime_properties']
-        # )
-        #
-        # self.assertIsNone(old_server2_instance['runtime_properties']
-        #                   .get('target_ops_counter'))
+        deployment, modified_bp_path = \
+            self._deploy_and_get_modified_bp_path(base_bp, modified_bp)
+
+        dep_update = \
+            self.client.deployment_updates.stage(deployment.id,
+                                                 modified_bp_path)
+
+        self.client.deployment_updates.add(
+                dep_update.id,
+                entity_type='relationship',
+                entity_id='site2:site1')
+
+        self.client.deployment_updates.commit(dep_update.id)
+
+        # assert that 'update' workflow was executed
+        executions = \
+            self.client.executions.list(deployment_id=deployment.id,
+                                        workflow_id='update')
+        execution = self._wait_for_execution(executions[0])
+        self.assertEquals('terminated', execution['status'],
+                          execution.error)
+
+    def test_remove_relationship(self):
+        bp_name = 'dep_up_remove_relationship'
+        base_bp = '{0}_base.yaml'.format(bp_name)
+        modified_bp = '{0}.yaml'.format(bp_name)
+
+        deployment, modified_bp_path = \
+            self._deploy_and_get_modified_bp_path(base_bp, modified_bp)
+
+        dep_update = \
+            self.client.deployment_updates.stage(deployment.id,
+                                                 modified_bp_path)
+
+        self.client.deployment_updates.remove(
+                dep_update.id,
+                entity_type='relationship',
+                entity_id='site2:site1')
+
+        self.client.deployment_updates.commit(dep_update.id)
+
+        # assert that 'update' workflow was executed
+        executions = \
+            self.client.executions.list(deployment_id=deployment.id,
+                                        workflow_id='update')
+        execution = self._wait_for_execution(executions[0])
+        self.assertEquals('terminated', execution['status'],
+                          execution.error)
+
+    def test_add_node(self):
+        test_name = 'dep_up_add_node'
+        base_bp = '{0}_base.yaml'.format(test_name)
+        modified_bp = '{0}.yaml'.format(test_name)
+
+        deployment, modified_bp_path = \
+            self._deploy_and_get_modified_bp_path(base_bp, modified_bp)
+
+        dep_update = \
+            self.client.deployment_updates.stage(deployment.id,
+                                                 modified_bp_path)
+
+        self.client.deployment_updates.add(
+                dep_update.id,
+                entity_type='node',
+                entity_id='site2')
+
+        self.client.deployment_updates.commit(dep_update.id)
+
+        # assert that 'update' workflow was executed
+        executions = \
+            self.client.executions.list(deployment_id=deployment.id,
+                                        workflow_id='update')
+        execution = self._wait_for_execution(executions[0])
+        self.assertEquals('terminated', execution['status'],
+                          execution.error)
+
+    def _test_remove_node(self, archive_mode=False):
+        bp_name = 'dep_up_remove_node'
+        base_bp = '{0}_base.yaml'.format(bp_name)
+        modified_bp = '{0}.yaml'.format(bp_name)
+
+        deployment, modified_bp_path = \
+            self._deploy_and_get_modified_bp_path(base_bp, modified_bp)
 
         tempdir = tempfile.mkdtemp()
         try:
             if archive_mode:
-                tar_path = tar_blueprint(new_blueprint_path, tempdir)
+                tar_path = tar_blueprint(modified_bp_path, tempdir)
                 dep_update = self.client.deployment_updates. \
                     stage_archive(deployment.id, tar_path,
-                                  os.path.basename(new_blueprint_path))
+                                  os.path.basename(modified_bp_path))
             else:
                 dep_update = \
                     self.client.deployment_updates.stage(deployment.id,
-                                                         new_blueprint_path)
+                                                         modified_bp_path)
             self.client.deployment_updates.remove(
                     dep_update.id,
                     entity_type='node',
-                    entity_id='server2')
+                    entity_id='site2')
 
             self.client.deployment_updates.commit(dep_update.id)
 
@@ -190,62 +252,6 @@ class TestDeploymentUpdate(TestCase):
             self.assertEquals('terminated', execution['status'],
                               execution.error)
 
-            related_node = \
-                self.client.nodes.get(deployment_id=deployment.id,
-                                      node_id='server2')
-            # related_node_instances = \
-            #     self.client.node_instances.list(deployment_id=deployment.id,
-            #                                     node_id='server2')
-            # self.assertEqual(len(related_node_instances), 1)
-            # related_node_instance = related_node_instances[0]
-            #
-            # affected_node = self.client.nodes.get(deployment_id=deployment.id,
-            #                                       node_id='old_site')
-            # affected_node_instances = \
-            #     self.client.node_instances.list(deployment_id=deployment.id,
-            #                                     node_id='old_site')
-            # self.assertEqual(len(affected_node_instances), 1)
-            # affected_node_instance = affected_node_instances[0]
-            #
-            # # Assert nodes are very similar
-            # self.assert_equal_objects(old_server2,
-            #                           related_node,
-            #                           exceptions=('relationships', 'plugins'))
-            # self.assert_equal_objects(old_server2_instance,
-            #                           related_node_instance,
-            #                           exceptions='runtime_properties')
-            # self.assert_equal_objects(old_site,
-            #                           affected_node,
-            #                           exceptions=('relationships', 'plugins'))
-            # self.assert_equal_objects(old_site_instance,
-            #                           affected_node_instance,
-            #                           exceptions=('relationships',
-            #                                       'runtime_properties'))
-            # # TODO: runtime_properties should be assert more thoroughly
-            #
-            # # assert that a new relationship node was created
-            # self.assertEquals(2, len(affected_node_instance.relationships))
-            #
-            # self._assert_relationship_exists(
-            #         affected_node_instance['relationships'],
-            #         target='server2',
-            #         expected_type=predicted_relationship_type)
-            #
-            # # assert all operations in 'update' ('install') workflow
-            # # are executed by making them increment a runtime property
-            #
-            # # Assert the source site still ran the relationship lifecycle once
-            # self.assertDictContainsSubset(
-            #         {'source_ops_counter': '3'},
-            #         affected_node_instance['runtime_properties']
-            # )
-            #
-            # # Assert that the destination of the new relationship ran all
-            # # of the lifecycles
-            # self.assertDictContainsSubset(
-            #         {'remote_ops_counter': '3'},
-            #         related_node_instance['runtime_properties']
-            # )
         finally:
             shutil.rmtree(tempdir, ignore_errors=True)
 
@@ -256,7 +262,7 @@ class TestDeploymentUpdate(TestCase):
         self._test_add_node(archive_mode=True)
 
     def test_add_relationship_bp(self):
-        self._test_add_relationship()
+        self._test_remove_node()
 
     def _assert_relationship_exists(self, relationships, target,
                                     expected_type=None):

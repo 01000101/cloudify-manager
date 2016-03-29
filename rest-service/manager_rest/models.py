@@ -118,6 +118,14 @@ class DeploymentUpdate(SerializableObject):
     COMMITTED = 'committed'
     COMMITTING = 'committing'
 
+    ADDED_AND_RELATED = 'added_and_related'
+    EXTENDED_AND_RELATED = 'extended_and_related'
+    REDUCED_AND_RELATED = 'reduced_and_related'
+    REMOVED_AND_RELATED = 'removed_and_related'
+
+    AFFECTED = 'affected'
+    RELATED = 'related'
+
     # states = {'staged', 'committed', 'reverted', 'committing', 'failed'}
 
     def __init__(self, deployment_id, blueprint, state='staged', id=None,
