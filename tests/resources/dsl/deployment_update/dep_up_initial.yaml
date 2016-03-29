@@ -19,8 +19,8 @@ node_templates:
   server:
     type: cloudify.nodes.Compute
 
-  server2:
-    type: cloudify.nodes.Compute
+#  server2:
+#    type: cloudify.nodes.Compute
 
   old_site:
     type: cloudify.nodes.Compute

@@ -14,14 +14,14 @@ relationships:
         preconfigure: scripts/increment.sh
         postconfigure: scripts/increment.sh
         establish: scripts/increment.sh
-  new_relationship_type:                  # New relationship type
-    derived_from: cloudify.relationships.connected_to
-    target_interfaces:
-      cloudify.interfaces.relationship_lifecycle:
-        preconfigure: scripts/remote_increment.sh
-        postconfigure: scripts/remote_increment.sh
-        establish: scripts/remote_increment.sh
-        unlink: scripts/touch.sh
+#  new_relationship_type:                  # New relationship type
+#    derived_from: cloudify.relationships.connected_to
+#    target_interfaces:
+#      cloudify.interfaces.relationship_lifecycle:
+#        preconfigure: scripts/remote_increment.sh
+#        postconfigure: scripts/remote_increment.sh
+#        establish: scripts/remote_increment.sh
+#        unlink: scripts/touch.sh
 
 node_templates:
   server:
@@ -35,5 +35,5 @@ node_templates:
     relationships:
       - type: old_relationship_type
         target: server
-      - type: new_relationship_type # New relationship instance
-        target: server2
+#      - type: new_relationship_type # New relationship instance
+#        target: server2

@@ -177,8 +177,8 @@ class TestDeploymentUpdate(TestCase):
                                                          new_blueprint_path)
             self.client.deployment_updates.remove(
                     dep_update.id,
-                    entity_type='relationship',
-                    entity_id='old_site:server2')
+                    entity_type='node',
+                    entity_id='server2')
 
             self.client.deployment_updates.commit(dep_update.id)
 
