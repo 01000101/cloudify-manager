@@ -11,7 +11,7 @@ relationships:
     derived_from: cloudify.relationships.connected_to
     target_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        unlink: scripts/touch.sh
+        unlink: scripts/remote_increment.sh
 
 node_templates:
   site0:

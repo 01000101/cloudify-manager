@@ -16,5 +16,5 @@ node_templates:
   site2:
     type: cloudify.nodes.Compute
     relationships:
-      - type: cloudify.relationships.connected_to
-        target: site0
+    - type: cloudify.relationships.connected_to
+      target: site0
