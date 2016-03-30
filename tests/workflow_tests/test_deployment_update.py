@@ -172,7 +172,7 @@ class TestDeploymentUpdate(TestCase):
 
         # check all operation have been executed
         self.assertDictContainsSubset(
-                {'target_ops_counter': '3'},
+                {'source_ops_counter': '3'},
                 source_node_instance['runtime_properties']
         )
 
@@ -241,7 +241,6 @@ class TestDeploymentUpdate(TestCase):
         source_node_instance = source_node_instances[0]
 
         # assert there are 2 relationships total
-        # TODO: FIX::source_node_instance isn't updated on removed relationships. # NOQA
         self.assertEquals(1, len(source_node.relationships))
         self.assertEquals(1, len(source_node_instance.relationships))
 
@@ -264,7 +263,7 @@ class TestDeploymentUpdate(TestCase):
                 target_node_instance['runtime_properties']
         )
 
-    def _test_remove_node(self):
+    def test_remove_node(self):
         deployment, modified_bp_path = \
             self._deploy_and_get_modified_bp_path('dep_up_remove_node')
 
@@ -330,7 +329,7 @@ class TestDeploymentUpdate(TestCase):
           all related operations were executed as well
         """
 
-        # TODO: FIX::currenly now plugins are added to the target of the relationship node. # NOQA
+        # TODO: FIX::currently no plugins are added to the target of the relationship node. # NOQA
         deployment, modified_bp_path = \
             self._deploy_and_get_modified_bp_path('dep_up_add_node')
 
@@ -376,7 +375,7 @@ class TestDeploymentUpdate(TestCase):
                     node.relationships,
                     target='site1',
                     expected_type='cloudify.relationships.contained_in')
-            self.assertEquals(node.type, 'cloudify.nodes.Compute')
+            self.assertEquals(node.type, 'cloudify.nodes.WebServer')
 
             # assert that node instance has a relationship
             added_instance = added_instances[0]
@@ -394,7 +393,7 @@ class TestDeploymentUpdate(TestCase):
             # assert operations affected the target node as well
             add_related_instance = \
                 self.client.node_instances.list(deployment_id=deployment.id,
-                                                node_id='site2')[0]
+                                                node_id='site1')[0]
             self.assertDictContainsSubset(
                     {'target_ops_counter': '3'},
                     add_related_instance['runtime_properties']

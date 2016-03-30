@@ -150,6 +150,15 @@ class DeploymentUpdateManager(object):
             return step.entity_id in _extract_ids(new_nodes)
 
     def _add_node(self, dep_update, entity_id):
+
+        raw_node = [n for n in dep_update.blueprint['nodes']
+                    if n['id'] == entity_id][0]
+
+        target_ids = [r['target_id'] for r in raw_node['relationships']]
+
+        target_raw_nodes = {n['id']: n for n in dep_update.blueprint['nodes']
+                            if n['id'] in target_ids}
+
         get_blueprints_manager()._create_deployment_nodes(
                 deployment_id=dep_update.deployment_id,
                 blueprint_id='N/A',
@@ -157,7 +166,17 @@ class DeploymentUpdateManager(object):
                 node_ids=entity_id
         )
 
-        return self.sm.get_node(dep_update.deployment_id, entity_id)
+        new_node = self.sm.get_node(dep_update.deployment_id, entity_id)
+
+        for target_id in target_ids:
+            self.sm.update_node(deployment_id=dep_update.deployment_id,
+                                node_id=target_id,
+                                changes={
+                                    'plugins':
+                                        target_raw_nodes[target_id]['plugins']
+                                })
+
+        return new_node
 
     def _add_relationship(self, dep_update, entity_id):
         source_node_id, target_node_id = entity_id.split(':')
@@ -280,14 +299,12 @@ class DeploymentUpdateManager(object):
                                        previous_node_instances=node_instances,
                                        modified_nodes=())
 
-    def _update_node_instance(self, node_instance, extend_relationships=False):
+    def _update_node_instance(self,
+                              node_instance):
         current = self.sm.get_node_instance(node_instance['id'])
-        new_relationships = current.relationships
-        if extend_relationships:
-            new_relationships += node_instance['relationships']
         self.sm.update_node_instance(models.DeploymentNodeInstance(
                 id=node_instance['id'],
-                relationships=new_relationships,
+                relationships=node_instance['relationships'],
                 version=current.version,
                 node_id=None,
                 host_id=None,
@@ -362,16 +379,17 @@ class DeploymentUpdateManager(object):
         for node_instance in instances:
             if node_instance.get('modification') == 'extended':
                 modified_raw_instances.append(node_instance)
-                self._update_node_instance(node_instance,
-                                           extend_relationships=True)
+                current = self.sm.get_node_instance(node_instance['id'])
+                node_instance['relationships'] += current.relationships
+                self._update_node_instance(node_instance)
             else:
                 modify_related_raw_instances.append(node_instance)
 
-        return {
-                    models.DeploymentUpdate.AFFECTED: modified_raw_instances,
-                    models.DeploymentUpdate.RELATED:
-                    modify_related_raw_instances
-                }
+        return \
+            {
+                models.DeploymentUpdate.AFFECTED: modified_raw_instances,
+                models.DeploymentUpdate.RELATED: modify_related_raw_instances
+            }
 
     def _handle_node_instances_updates(self, dep_update,
                                        updated_instances):
