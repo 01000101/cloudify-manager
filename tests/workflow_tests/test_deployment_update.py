@@ -42,11 +42,12 @@ class TestDeploymentUpdate(TestCase):
             time.sleep(3)
 
     @staticmethod
-    def assert_equal_dictionaries(d1, d2, exceptions=()):
+    def assert_equal_dictionaries(self, d1, d2, exceptions=()):
         for k, v in d1.iteritems():
-            if cmp(d2[k], v) != 0 and k not in exceptions:
-                raise Exception('The nodes differed on {0}. {1}!={2}'
-                                .format(k, d1[k], d2[k]))
+            if k not in exceptions:
+                self.assertEquals(d2[k], v,
+                                  'The nodes differed on {0}. {1}!={2}'
+                                  .format(k, d1[k], d2[k]))
 
     def _assert_relationship(self, relationships, target,
                              expected_type=None, exists=True):
@@ -329,7 +330,6 @@ class TestDeploymentUpdate(TestCase):
           all related operations were executed as well
         """
 
-        # TODO: FIX::currently no plugins are added to the target of the relationship node. # NOQA
         deployment, modified_bp_path = \
             self._deploy_and_get_modified_bp_path('dep_up_add_node')
 
