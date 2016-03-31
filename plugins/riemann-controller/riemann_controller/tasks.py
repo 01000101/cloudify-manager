@@ -168,10 +168,15 @@ def _verify_core_up(deployment_config_dir_path):
 def _process_types_and_triggers(groups, policy_types, policy_triggers):
     types_to_process = set()
     types_to_remove = set()
+    groups_to_remove = set()
     triggers_to_process = set()
     triggers_to_remove = set()
-    for group in groups.values():
-        for policy in group['policies'].values():
+    for group_name, group in groups.items():
+        group_policies = group.get('policies', {})
+        if 'cloudify.policies.scaling' in group_policies:
+            groups_to_remove.add(group_name)
+            continue
+        for policy in group_policies.values():
             types_to_process.add(policy['type'])
             for trigger in policy['triggers'].values():
                 triggers_to_process.add(trigger['type'])
@@ -185,6 +190,8 @@ def _process_types_and_triggers(groups, policy_types, policy_triggers):
             trigger['source'] = _process_source(trigger['source'])
         else:
             triggers_to_remove.add(policy_trigger_name)
+    for group_name in groups_to_remove:
+        del groups[group_name]
     for policy_type_name in types_to_remove:
         del policy_types[policy_type_name]
     for trigger_type_name in triggers_to_remove:

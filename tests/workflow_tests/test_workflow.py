@@ -33,6 +33,7 @@ from testenv.utils import (
 
 
 class BasicWorkflowsTest(TestCase):
+
     def test_execute_operation(self):
         dsl_path = get_resource('dsl/basic.yaml')
         blueprint_id = self.id()

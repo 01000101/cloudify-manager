@@ -134,7 +134,8 @@ class DeploymentNode(SerializableObject):
         'id', 'deployment_id', 'blueprint_id', 'type', 'type_hierarchy',
         'number_of_instances', 'planned_number_of_instances',
         'deploy_number_of_instances', 'host_id', 'properties',
-        'operations', 'plugins', 'relationships', 'plugins_to_install'
+        'operations', 'plugins', 'relationships', 'plugins_to_install',
+        'min_number_of_instances', 'max_number_of_instances'
     }
 
     def __init__(self, **kwargs):
@@ -147,6 +148,8 @@ class DeploymentNode(SerializableObject):
         self.planned_number_of_instances = kwargs[
             'planned_number_of_instances']
         self.deploy_number_of_instances = kwargs['deploy_number_of_instances']
+        self.min_number_of_instances = kwargs['min_number_of_instances']
+        self.max_number_of_instances = kwargs['max_number_of_instances']
         self.host_id = kwargs['host_id']
         self.properties = kwargs['properties']
         self.operations = kwargs['operations']
@@ -161,7 +164,7 @@ class DeploymentNodeInstance(SerializableObject):
     """
     fields = {
         'id', 'deployment_id', 'runtime_properties', 'state', 'version',
-        'relationships', 'node_id', 'host_id'
+        'relationships', 'node_id', 'host_id', 'scaling_groups'
     }
 
     def __init__(self, **kwargs):
@@ -173,6 +176,7 @@ class DeploymentNodeInstance(SerializableObject):
         self.version = kwargs['version']
         self.relationships = kwargs['relationships']
         self.host_id = kwargs['host_id']
+        self.scaling_groups = kwargs['scaling_groups']
 
 
 class ProviderContext(SerializableObject):

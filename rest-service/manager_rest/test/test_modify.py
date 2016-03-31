@@ -98,6 +98,8 @@ class ModifyTests(base_test.BaseServerTestCase):
         modified_nodes = {'node1': {'instances': 2}}
         modification = self.client.deployment_modifications.start(
             deployment.id, nodes=modified_nodes, context=mock_context)
+        self._fix_modification(modification)
+
         self.assertEqual(modification.node_instances.before_modification,
                          before_modification)
         self.assertIsNone(modification.ended_at)
@@ -129,6 +131,7 @@ class ModifyTests(base_test.BaseServerTestCase):
 
         modification = self.client.deployment_modifications.get(
             modification.id)
+        self._fix_modification(modification)
         self.assertEqual(modification.id, modification_id)
         self.assertEqual(modification.status, expected_end_status)
         self.assertEqual(modification.deployment_id, deployment.id)
@@ -142,6 +145,9 @@ class ModifyTests(base_test.BaseServerTestCase):
         dep_modifications = self.list_items(
             self.client.deployment_modifications.list,
             deployment_id=deployment.id)
+        for modifications in [all_modifications, dep_modifications]:
+            for m in modifications:
+                self._fix_modification(m)
         self.assertEqual(len(dep_modifications), 1)
         self.assertEqual(dep_modifications[0], modification)
         self.assertEqual(all_modifications, dep_modifications)
@@ -170,7 +176,15 @@ class ModifyTests(base_test.BaseServerTestCase):
                 node2_instance.id).runtime_properties['test'],
             expected_after_end_runtime_property)
 
-    def list_items(self, list_func, *args, **kwargs):
+    @staticmethod
+    def _fix_modification(modification):
+        if CLIENT_API_VERSION in ['v1', 'v2']:
+            for node_instances in modification.node_instances.values():
+                for node_instance in node_instances:
+                    node_instance.pop('scaling_groups', [])
+
+    @staticmethod
+    def list_items(list_func, *args, **kwargs):
         if CLIENT_API_VERSION != 'v1':
             return list_func(*args, **kwargs).items
         else:

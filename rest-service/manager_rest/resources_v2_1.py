@@ -17,13 +17,14 @@
 import os
 from flask_securest.rest_security import SecuredResource
 
+from manager_rest import resources
+from manager_rest import resources_v2
+from manager_rest import responses_v2_1
 from manager_rest import utils
+from manager_rest import models
+from manager_rest import config
 from manager_rest.resources import (marshal_with,
                                     exceptions_handled)
-
-from manager_rest import models
-from manager_rest import responses_v2_1
-from manager_rest import config
 from manager_rest.blueprints_manager import get_blueprints_manager
 from manager_rest.constants import (MAINTENANCE_MODE_ACTIVE,
                                     MAINTENANCE_MODE_STATUS_FILE,
@@ -75,6 +76,39 @@ class MaintenanceModeAction(SecuredResource):
                 return {'status': NOT_IN_MAINTENANCE_MODE}, 304
             os.remove(maintenance_file_path)
             return {'status': NOT_IN_MAINTENANCE_MODE}
+
+
+class Nodes(resources_v2.Nodes):
+
+    @exceptions_handled
+    @marshal_with(responses_v2_1.Node)
+    def get(self, *args, **kwargs):
+        with resources.skip_nested_marshalling():
+            return super(Nodes, self).get(*args, **kwargs)
+
+
+class NodeInstances(resources_v2.NodeInstances):
+
+    @exceptions_handled
+    @marshal_with(responses_v2_1.NodeInstance)
+    def get(self, *args, **kwargs):
+        with resources.skip_nested_marshalling():
+            return super(NodeInstances, self).get(*args, **kwargs)
+
+
+class NodeInstancesId(resources.NodeInstancesId):
+
+    @exceptions_handled
+    @marshal_with(responses_v2_1.NodeInstance)
+    def get(self, *args, **kwargs):
+        with resources.skip_nested_marshalling():
+            return super(NodeInstancesId, self).get(*args, **kwargs)
+
+    @exceptions_handled
+    @marshal_with(responses_v2_1.NodeInstance)
+    def patch(self, *args, **kwargs):
+        with resources.skip_nested_marshalling():
+            return super(NodeInstancesId, self).patch(*args, **kwargs)
 
 
 def get_maintenance_file_path():

@@ -289,5 +289,6 @@ class NodesTest(base_test.BaseServerTestCase):
                                       state=None,
                                       version=None,
                                       relationships=None,
-                                      host_id=None)
+                                      host_id=None,
+                                      scaling_groups=None)
         storage_manager._get_instance().put_node_instance(node)
